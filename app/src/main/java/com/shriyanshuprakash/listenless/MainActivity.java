@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button startButton;
     private Button saveButton;
+    private Button notesButton;
 
     private SpeechRecognizer speechRecognizer;
     private Intent speechIntent;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
         startButton = findViewById(R.id.startButton);
         saveButton = findViewById(R.id.saveButton);
+        notesButton = findViewById(R.id.notesButton);
 
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -216,6 +218,16 @@ public class MainActivity extends AppCompatActivity {
 
                 e.printStackTrace();
             }
+        });
+
+        notesButton.setOnClickListener(v -> {
+
+            Intent intent =
+                    new Intent(
+                            MainActivity.this,
+                            NotesActivity.class);
+
+            startActivity(intent);
         });
     }
 
