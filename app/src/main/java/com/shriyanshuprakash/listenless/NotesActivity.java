@@ -1,9 +1,11 @@
 package com.shriyanshuprakash.listenless;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -39,7 +41,7 @@ public class NotesActivity extends AppCompatActivity {
             }
         }
 
-        ArrayAdapter<String> adapter =
+        final ArrayAdapter<String> adapter =
                 new ArrayAdapter<>(
                         this,
                         android.R.layout.simple_list_item_1,
@@ -60,6 +62,45 @@ public class NotesActivity extends AppCompatActivity {
             intent.putExtra("fileName", fileName);
 
             startActivity(intent);
+        });
+
+        notesList.setOnItemLongClickListener((parent, view, position, id) -> {
+
+            String fileName = fileNames.get(position);
+
+            new AlertDialog.Builder(NotesActivity.this)
+                    .setTitle("Delete Transcript")
+                    .setMessage("Delete " + fileName + "?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+
+                        File file =
+                                new File(getFilesDir(), fileName);
+
+                        if (file.delete()) {
+
+                            fileNames.remove(position);
+
+                            adapter.notifyDataSetChanged();
+
+                            Toast.makeText(
+                                    NotesActivity.this,
+                                    "Transcript Deleted",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+
+                        } else {
+
+                            Toast.makeText(
+                                    NotesActivity.this,
+                                    "Delete Failed",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+
+            return true;
         });
     }
 }
