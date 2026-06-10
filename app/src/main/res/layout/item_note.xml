@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/noteItemRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp"
+    android:background="@drawable/item_note_bg">
+
+    <!-- Selection checkbox (hidden in normal mode) -->
+    <CheckBox
+        android:id="@+id/noteCheckbox"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="14dp"
+        android:visibility="gone"
+        android:clickable="false"
+        android:focusable="false"
+        android:button="@drawable/checkbox_custom"/>
+
+    <!-- Left accent bar — purple to match app theme -->
+    <View
+        android:id="@+id/accentBar"
+        android:layout_width="3dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="14dp"
+        android:background="#8B5CF6"
+        android:visibility="visible"/>
+
+    <!-- Text block -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/noteTitleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Transcript"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+
+        <TextView
+            android:id="@+id/noteDateText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Jun 10, 2025 · 14:32"
+            android:textColor="#6D6D80"
+            android:textSize="12sp"
+            android:fontFamily="monospace"/>
+
+    </LinearLayout>
+
+    <!-- Chevron (hidden in selection mode) -->
+    <TextView
+        android:id="@+id/noteChevron"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="›"
+        android:textColor="#8B5CF6"
+        android:textSize="22sp"
+        android:paddingStart="8dp"/>
+
+</LinearLayout>
