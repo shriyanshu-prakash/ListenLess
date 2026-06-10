@@ -18,6 +18,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
 
     private TextView transcriptText;
+    private TextView statusText;
     private Button startButton;
 
     private final ActivityResultLauncher<Intent> speechLauncher =
@@ -33,7 +34,9 @@ public class MainActivity extends AppCompatActivity {
                                             RecognizerIntent.EXTRA_RESULTS);
 
                             if (results != null && !results.isEmpty()) {
+
                                 transcriptText.setText(results.get(0));
+                                statusText.setText("● Ready");
                             }
                         }
                     });
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         transcriptText = findViewById(R.id.transcriptText);
+        statusText = findViewById(R.id.statusText);
         startButton = findViewById(R.id.startButton);
 
         if (ActivityCompat.checkSelfPermission(
@@ -59,16 +63,14 @@ public class MainActivity extends AppCompatActivity {
 
         startButton.setOnClickListener(v -> {
 
+            statusText.setText("● Listening");
+
             Intent intent =
                     new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
 
             intent.putExtra(
                     RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                     RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-
-            intent.putExtra(
-                    RecognizerIntent.EXTRA_PROMPT,
-                    "Speak now...");
 
             speechLauncher.launch(intent);
         });
