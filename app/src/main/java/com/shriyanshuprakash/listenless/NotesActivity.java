@@ -1,5 +1,6 @@
 package com.shriyanshuprakash.listenless;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -24,14 +25,17 @@ public class NotesActivity extends AppCompatActivity {
 
         File[] files = folder.listFiles();
 
-        ArrayList<String> fileNames =
-                new ArrayList<>();
+        ArrayList<String> fileNames = new ArrayList<>();
 
         if (files != null) {
 
             for (File file : files) {
 
-                fileNames.add(file.getName());
+                // Only show transcript files
+                if (file.getName().startsWith("Transcript_")) {
+
+                    fileNames.add(file.getName());
+                }
             }
         }
 
@@ -43,5 +47,19 @@ public class NotesActivity extends AppCompatActivity {
                 );
 
         notesList.setAdapter(adapter);
+
+        notesList.setOnItemClickListener((parent, view, position, id) -> {
+
+            String fileName = fileNames.get(position);
+
+            Intent intent =
+                    new Intent(
+                            NotesActivity.this,
+                            TranscriptActivity.class);
+
+            intent.putExtra("fileName", fileName);
+
+            startActivity(intent);
+        });
     }
 }
