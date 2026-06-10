@@ -9,17 +9,25 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
     private TextView transcriptText;
     private TextView statusText;
+
     private Button startButton;
+    private Button saveButton;
 
     private SpeechRecognizer speechRecognizer;
     private Intent speechIntent;
@@ -35,7 +43,9 @@ public class MainActivity extends AppCompatActivity {
 
         transcriptText = findViewById(R.id.transcriptText);
         statusText = findViewById(R.id.statusText);
+
         startButton = findViewById(R.id.startButton);
+        saveButton = findViewById(R.id.saveButton);
 
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -93,7 +103,6 @@ public class MainActivity extends AppCompatActivity {
                 } else {
 
                     statusText.setText("● Ready");
-
                     startButton.setText("🎤 Start Listening");
                 }
             }
@@ -121,7 +130,6 @@ public class MainActivity extends AppCompatActivity {
                 } else {
 
                     statusText.setText("● Ready");
-
                     startButton.setText("🎤 Start Listening");
                 }
             }
@@ -155,7 +163,6 @@ public class MainActivity extends AppCompatActivity {
                 speechRecognizer.startListening(speechIntent);
 
                 statusText.setText("● Listening");
-
                 startButton.setText("⏹ Stop Listening");
 
             } else {
@@ -166,8 +173,48 @@ public class MainActivity extends AppCompatActivity {
                 speechRecognizer.cancel();
 
                 statusText.setText("● Stopped");
-
                 startButton.setText("🎤 Start Listening");
+            }
+        });
+
+        saveButton.setOnClickListener(v -> {
+
+            try {
+
+                String timestamp =
+                        new SimpleDateFormat(
+                                "yyyy-MM-dd_HH-mm-ss",
+                                Locale.getDefault())
+                                .format(new Date());
+
+                String fileName =
+                        "Transcript_" + timestamp + ".txt";
+
+                File file =
+                        new File(getFilesDir(), fileName);
+
+                FileWriter writer =
+                        new FileWriter(file);
+
+                writer.write(fullTranscript);
+
+                writer.close();
+
+                Toast.makeText(
+                        MainActivity.this,
+                        "Transcript Saved ✓",
+                        Toast.LENGTH_SHORT
+                ).show();
+
+            } catch (Exception e) {
+
+                Toast.makeText(
+                        MainActivity.this,
+                        "Save Failed",
+                        Toast.LENGTH_SHORT
+                ).show();
+
+                e.printStackTrace();
             }
         });
     }

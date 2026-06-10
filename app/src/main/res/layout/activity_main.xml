@@ -10,7 +10,6 @@
         android:orientation="vertical"
         android:padding="24dp">
 
-        <!-- Top spacing -->
         <View
             android:layout_width="match_parent"
             android:layout_height="45dp"/>
@@ -46,6 +45,7 @@
             </LinearLayout>
 
             <ImageButton
+                android:id="@+id/settingsButton"
                 android:layout_width="52dp"
                 android:layout_height="52dp"
                 android:background="#151515"
@@ -90,7 +90,7 @@
                 android:layout_marginTop="25dp"
                 android:text="Your captions will appear here..."
                 android:textColor="#DDDDDD"
-                android:textSize="22sp"/>
+                android:textSize="22sp" />
 
         </LinearLayout>
 
@@ -101,11 +101,11 @@
             android:layout_width="match_parent"
             android:layout_height="78dp"
             android:layout_marginTop="24dp"
-            android:text="🎤  Start Listening"
+            android:text="🎤 Start Listening"
             android:textAllCaps="false"
-            android:textSize="20sp"/>
+            android:textSize="20sp" />
 
-        <!-- Secondary Buttons -->
+        <!-- Bottom Buttons -->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -114,22 +114,36 @@
             android:orientation="horizontal">
 
             <Button
+                android:id="@+id/importButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
                 android:text="📂 Import"
-                android:textAllCaps="false"/>
+                android:textAllCaps="false" />
 
             <Space
-                android:layout_width="12dp"
-                android:layout_height="1dp"/>
+                android:layout_width="8dp"
+                android:layout_height="1dp" />
 
             <Button
+                android:id="@+id/saveButton"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:text="💾 Save"
+                android:textAllCaps="false" />
+
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="1dp" />
+
+            <Button
+                android:id="@+id/notesButton"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
                 android:text="📝 Notes"
-                android:textAllCaps="false"/>
+                android:textAllCaps="false" />
 
         </LinearLayout>
 
