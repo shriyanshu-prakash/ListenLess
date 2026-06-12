@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -38,6 +39,8 @@ public class NotesActivity extends AppCompatActivity {
     private LinearLayout selectionActionBar;
     private TextView selectionCountText;
     private Button cancelSelectionButton;
+    private Button newNoteButton;
+    private Button renameSelectedButton;
     private Button shareSelectedButton;
     private Button deleteSelectedButton;
 
@@ -51,20 +54,26 @@ public class NotesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes);
 
-        notesList          = findViewById(R.id.notesList);
-        normalHeader       = findViewById(R.id.normalHeader);
-        selectionHeader    = findViewById(R.id.selectionHeader);
-        selectionActionBar = findViewById(R.id.selectionActionBar);
-        selectionCountText = findViewById(R.id.selectionCountText);
+        notesList             = findViewById(R.id.notesList);
+        normalHeader          = findViewById(R.id.normalHeader);
+        selectionHeader       = findViewById(R.id.selectionHeader);
+        selectionActionBar    = findViewById(R.id.selectionActionBar);
+        selectionCountText    = findViewById(R.id.selectionCountText);
         cancelSelectionButton = findViewById(R.id.cancelSelectionButton);
+        renameSelectedButton  = findViewById(R.id.renameSelectedButton);
         shareSelectedButton   = findViewById(R.id.shareSelectedButton);
         deleteSelectedButton  = findViewById(R.id.deleteSelectedButton);
 
-        loadFiles();
+        findViewById(R.id.backButton).setOnClickListener(v -> finish());
 
+        newNoteButton = findViewById(R.id.newNoteButton);
+        newNoteButton.setOnClickListener(v -> createNewNote());
+
+        loadFiles();
         adapter = new NoteAdapter();
         notesList.setAdapter(adapter);
 
+        // Single tap: open transcript or toggle selection
         notesList.setOnItemClickListener((parent, view, position, id) -> {
             if (isSelectionMode) {
                 toggleSelection(position);
@@ -76,6 +85,7 @@ public class NotesActivity extends AppCompatActivity {
             }
         });
 
+        // Long press: enter selection mode with this item selected
         notesList.setOnItemLongClickListener((parent, view, position, id) -> {
             if (!isSelectionMode) enterSelectionMode();
             toggleSelection(position);
@@ -83,8 +93,9 @@ public class NotesActivity extends AppCompatActivity {
         });
 
         cancelSelectionButton.setOnClickListener(v -> exitSelectionMode());
-        deleteSelectedButton.setOnClickListener(v -> confirmBulkDelete());
+        renameSelectedButton.setOnClickListener(v -> renameSelected());
         shareSelectedButton.setOnClickListener(v -> shareSelected());
+        deleteSelectedButton.setOnClickListener(v -> confirmBulkDelete());
     }
 
     @Override
@@ -103,6 +114,25 @@ public class NotesActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
+    // ─── New Note ─────────────────────────────────────────────────────────────
+
+    private void createNewNote() {
+        try {
+            String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).format(new Date());
+            String fileName = "Transcript_" + timestamp + ".txt";
+            File file = new File(getFilesDir(), fileName);
+            file.createNewFile(); // empty file
+
+            // Open it straight into TranscriptActivity
+            Intent intent = new Intent(NotesActivity.this, TranscriptActivity.class);
+            intent.putExtra("fileName", fileName);
+            startActivityForResult(intent, REQUEST_TRANSCRIPT);
+        } catch (Exception e) {
+            Toast.makeText(this, "Could not create note", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+    }
+
     // ─── File Loading ─────────────────────────────────────────────────────────
 
     private void loadFiles() {
@@ -112,7 +142,6 @@ public class NotesActivity extends AppCompatActivity {
         if (files != null) {
             for (File file : files) {
                 String name = file.getName();
-                // Include all .txt files except the titles JSON store
                 if (name.endsWith(".txt") && !name.equals("note_titles.json")) {
                     fileNames.add(name);
                 }
@@ -156,7 +185,39 @@ public class NotesActivity extends AppCompatActivity {
     }
 
     private void updateSelectionCount() {
-        selectionCountText.setText(selectedPositions.size() + " selected");
+        int count = selectedPositions.size();
+        selectionCountText.setText(count + " selected");
+        // Show Rename only when exactly 1 item is selected
+        renameSelectedButton.setVisibility(count == 1 ? View.VISIBLE : View.GONE);
+    }
+
+    // ─── Rename ───────────────────────────────────────────────────────────────
+
+    private void renameSelected() {
+        if (selectedPositions.size() != 1) return;
+        int position = selectedPositions.iterator().next();
+        String fileName = fileNames.get(position);
+
+        EditText input = new EditText(this);
+        String currentTitle = TitleManager.getTitle(this, fileName);
+        input.setText(currentTitle != null ? currentTitle : fileName.replace(".txt", ""));
+
+        new AlertDialog.Builder(this)
+                .setTitle("Rename Transcript")
+                .setView(input)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String newTitle = input.getText().toString().trim();
+                    if (newTitle.isEmpty()) {
+                        Toast.makeText(this, "Title cannot be empty", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    String newFileName = TitleManager.saveTitle(this, fileName, newTitle);
+                    fileNames.set(position, newFileName);
+                    exitSelectionMode();
+                    Toast.makeText(this, "Renamed ✓", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     // ─── Bulk Delete ──────────────────────────────────────────────────────────
@@ -194,6 +255,8 @@ public class NotesActivity extends AppCompatActivity {
     private String resolveDisplayName(String fileName) {
         String customTitle = TitleManager.getTitle(this, fileName);
         if (customTitle != null) return customTitle;
+        String timestamp = TitleManager.getTimestamp(this, fileName);
+        if (timestamp != null) return timestamp;
         try {
             String stripped = fileName.replace("Transcript_", "").replace(".txt", "");
             Date date = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).parse(stripped);
@@ -203,20 +266,13 @@ public class NotesActivity extends AppCompatActivity {
         }
     }
 
-    // Copies a transcript's content into a temp file named with the display title.
-    // This ensures the receiving app sees the custom name, not the raw timestamp filename.
     private File buildShareFile(String fileName, File shareDir) throws Exception {
-        String displayName = resolveDisplayName(fileName);
-        String safeName = displayName.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+        String safeName = resolveDisplayName(fileName).replaceAll("[\\\\/:*?\"<>|]", "_").trim();
         File shareFile = new File(shareDir, safeName + ".txt");
-
         BufferedReader reader = new BufferedReader(new FileReader(new File(getFilesDir(), fileName)));
         FileWriter writer = new FileWriter(shareFile);
         String line;
-        while ((line = reader.readLine()) != null) {
-            writer.write(line);
-            writer.write("\n");
-        }
+        while ((line = reader.readLine()) != null) { writer.write(line); writer.write("\n"); }
         reader.close();
         writer.close();
         return shareFile;
@@ -225,7 +281,6 @@ public class NotesActivity extends AppCompatActivity {
     private File prepareShareDir() {
         File shareDir = new File(getCacheDir(), "share");
         shareDir.mkdirs();
-        // Clear stale temp files
         File[] old = shareDir.listFiles();
         if (old != null) for (File f : old) f.delete();
         return shareDir;
@@ -246,7 +301,6 @@ public class NotesActivity extends AppCompatActivity {
             File shareDir = prepareShareDir();
             File shareFile = buildShareFile(fileName, shareDir);
             Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", shareFile);
-
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("text/plain");
             intent.putExtra(Intent.EXTRA_STREAM, uri);
@@ -301,21 +355,31 @@ public class NotesActivity extends AppCompatActivity {
             TextView chevron   = convertView.findViewById(R.id.noteChevron);
             View     root      = convertView.findViewById(R.id.noteItemRoot);
 
+            // Title: custom name if set, else parse from filename
             String customTitle = TitleManager.getTitle(NotesActivity.this, fileName);
-            String displayTitle = fileName.replace(".txt", "");
-            String displayDate = "";
-
-            try {
-                String stripped = fileName.replace("Transcript_", "").replace(".txt", "");
-                Date date = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).parse(stripped);
-                if (customTitle != null) {
-                    displayTitle = customTitle;
-                } else {
+            String displayTitle;
+            if (customTitle != null) {
+                displayTitle = customTitle;
+            } else {
+                try {
+                    String stripped = fileName.replace("Transcript_", "").replace(".txt", "");
+                    Date date = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).parse(stripped);
                     displayTitle = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(date);
+                } catch (Exception e) {
+                    displayTitle = fileName.replace(".txt", "");
                 }
-                displayDate = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
-            } catch (Exception ignored) {
-                if (customTitle != null) displayTitle = customTitle;
+            }
+
+            // Date: try TitleManager first (survives renames), then parse from filename directly
+            String displayDate = TitleManager.getTimestamp(NotesActivity.this, fileName);
+            if (displayDate == null) {
+                try {
+                    String stripped = fileName.replace("Transcript_", "").replace(".txt", "");
+                    Date date = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).parse(stripped);
+                    displayDate = new SimpleDateFormat("MMM d, yyyy · HH:mm", Locale.getDefault()).format(date);
+                } catch (Exception e) {
+                    displayDate = "";
+                }
             }
 
             titleText.setText(displayTitle);

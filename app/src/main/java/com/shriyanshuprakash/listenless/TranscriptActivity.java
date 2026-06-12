@@ -62,6 +62,9 @@ public class TranscriptActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        // Back button
+        findViewById(R.id.backButton).setOnClickListener(v -> finish());
+
         // Tap title to rename
         fileNameText.setOnClickListener(v -> showRenameDialog());
 
